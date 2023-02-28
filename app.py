@@ -92,6 +92,11 @@ def build_json(cmp, latest):
         'url': latest['html_url']
     }
 
+
+@app.route('/')
+def index():
+    return build_json(False, get_latest_release())
+
 @app.route('/check/<path:version>')
 def check_route(version):
     data = {}
