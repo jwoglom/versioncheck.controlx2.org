@@ -8,6 +8,9 @@ import arrow
 
 from flask import Flask, render_template, Response, request, abort, redirect
 
+from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import Counter, Gauge
+
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -16,6 +19,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
+
+version_checks = Counter('version_checks', 'Version checks', ['version', 'timezone', 'countryCode'])
+latest_version = Gauge('latest_version', 'Latest version', ['version'])
+compare_results = Counter('compare_results', 'Compare results', ['status'])
+release_fetches = Counter('release_fetches', 'Release fetches from GitHub', [])
+
 
 GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 def fetch_all_releases():
@@ -53,6 +63,7 @@ def get_latest_release():
         break
 
     logger.info(f'latest_release: {latest_release}')
+    release_fetches.inc()
 
     if latest_release:
         latest_release_time = time.time()
@@ -60,9 +71,14 @@ def get_latest_release():
 
 def compare_releases(version):
     latest = get_latest_release()
-    latest_ver = latest['name']
+    latest_ver = latest['name'].strip()
 
-    if latest_ver.strip() == version.strip():
+    version = version.strip()
+
+    latest_version.clear()
+    latest_version.labels(latest_release['name']).set(1)
+
+    if latest_ver == version:
         return True, latest
     
     latest_base = latest_ver
@@ -102,8 +118,16 @@ def check_route(version):
     data = {}
     if request.is_json:
         data = request.json
+
+    version_checks.labels(
+        version,
+        data.get('timezone'),
+        data.get('countryCode')
+    ).inc()
+
     logger.info(f'check: {version} {data}')
 
     cmp, latest = compare_releases(version)
+    compare_results.labels('up_to_date' if cmp else 'needs_update').inc()
     
     return build_json(cmp, latest)
