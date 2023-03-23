@@ -39,4 +39,4 @@ COPY . .
 
 # Run the application
 EXPOSE 8080
-ENTRYPOINT ["gunicorn", "--bind=0.0.0.0:8080", "app:app"]
+ENTRYPOINT ["gunicorn", "--bind=0.0.0.0:8080", "-c=gunicorn_wsgi.py", "app:app"]

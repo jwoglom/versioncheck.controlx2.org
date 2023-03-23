@@ -8,8 +8,8 @@ import arrow
 
 from flask import Flask, render_template, Response, request, abort, redirect
 
-from prometheus_flask_exporter import PrometheusMetrics
-from prometheus_client import Counter, Gauge
+from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
+from prometheus_client import Counter, Gauge, start_http_server
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -19,7 +19,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-metrics = PrometheusMetrics(app)
+metrics = GunicornPrometheusMetrics(app)
 
 version_checks = Counter('version_checks', 'Version checks', ['version', 'timezone', 'countryCode'])
 latest_version = Gauge('latest_version', 'Latest version', ['version'])
@@ -131,3 +131,7 @@ def check_route(version):
     compare_results.labels('up_to_date' if cmp else 'needs_update').inc()
     
     return build_json(cmp, latest)
+
+@app.route('/healthz')
+def healthz_route():
+    return 'ok'
