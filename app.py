@@ -56,7 +56,7 @@ def get_latest_release():
         if r['draft'] or r['prerelease']:
             continue
         
-        if is_too_recent(r):
+        if is_too_recent(r) and not '[URGENT]' in r['body']:
             continue
 
         latest_release = r
