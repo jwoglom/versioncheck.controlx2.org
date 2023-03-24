@@ -132,6 +132,13 @@ def check_route(version):
     
     return build_json(cmp, latest)
 
+@app.route('/refresh')
+def refresh_route():
+    global latest_release_time
+    latest_release_time = None
+    return index()
+
+
 @app.route('/healthz')
 def healthz_route():
     return 'ok'
