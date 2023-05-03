@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 metrics = GunicornPrometheusMetrics(app)
 
-version_checks = Counter('version_checks', 'Version checks', ['version', 'timezone', 'countryCode'])
+version_checks = Counter('version_checks', 'Version checks', ['version', 'timezone', 'countryCode', 'deviceUuid'])
 latest_version = Gauge('latest_version', 'Latest version', ['version'])
 compare_results = Counter('compare_results', 'Compare results', ['status'])
 release_fetches = Counter('release_fetches', 'Release fetches from GitHub', [])
@@ -113,16 +113,19 @@ def build_json(cmp, latest):
 def index():
     return build_json(False, get_latest_release())
 
-@app.route('/check/<path:version>')
+@app.route('/check/<path:version>', methods=['GET', 'POST'])
 def check_route(version):
     data = {}
     if request.is_json:
         data = request.json
 
+    user = data.get('user', {})
+
     version_checks.labels(
         version,
-        data.get('timezone'),
-        data.get('countryCode')
+        user.get('timezone'),
+        user.get('countryCode'),
+        user.get('deviceUuid')
     ).inc()
 
     logger.info(f'check: {version} {data}')
