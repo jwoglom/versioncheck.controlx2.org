@@ -34,6 +34,8 @@ def fetch_all_releases():
         'Authorization': 'Bearer ' + GITHUB_TOKEN,
         'X-GitHub-Api-Version': '2022-11-28'
     })
+    if r.status_code//100 >= 4:
+        raise RuntimeError(f'got status_code={r.status_code} from GitHub')
     return r.json()
 
 # Wait 12 hours before advertising a new release

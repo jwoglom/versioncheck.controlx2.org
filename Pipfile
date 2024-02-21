@@ -12,5 +12,8 @@ gunicorn = "*"
 
 [dev-packages]
 
+[scripts]
+"app.py" = "gunicorn --bind=0.0.0.0:8080 -c=gunicorn_wsgi.py app:app"
+
 [requires]
 python_version = "3.10"
