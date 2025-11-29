@@ -106,7 +106,7 @@ def build_json(cmp, latest):
     return {
         'upToDate': cmp,
         'newVersion': latest['name'],
-        'description': latest['body'].splitlines()[0],
+        'description': latest['body'].splitlines()[0] if 'body' in latest and latest['body'] else '',
         'url': latest['html_url']
     }
 
