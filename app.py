@@ -5,6 +5,7 @@ import requests
 import logging
 import time
 import arrow
+import re
 
 from flask import Flask, render_template, Response, request, abort, redirect
 
@@ -103,10 +104,22 @@ def compare_releases(version):
     return True, latest
 
 def build_json(cmp, latest):
+    description = ''
+    body = latest.get('body', '')
+    if body:
+        for line in body.splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if re.match(r'^#{1,6}\s+', stripped):
+                continue
+            description = stripped
+            break
+
     return {
         'upToDate': cmp,
         'newVersion': latest['name'],
-        'description': latest['body'].splitlines()[0] if 'body' in latest and latest['body'] else '',
+        'description': description,
         'url': latest['html_url']
     }
 
